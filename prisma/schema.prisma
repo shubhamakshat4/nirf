@@ -1,10 +1,12 @@
 // NIRF Readiness Portal — data model.
 //
-// SQLite for development. To move to Postgres, change `provider` to
-// "postgresql" and point DATABASE_URL at the server; every query lives behind
-// lib/db/*.ts so nothing else changes. Status fields are strings validated at
-// the application boundary (Zod + lib/db/types.ts) rather than DB enums, so the
-// schema is identical across providers.
+// SQLite for local development, Postgres in production. The `provider` line
+// below is rewritten from DATABASE_URL by scripts/set-db-provider.mjs, which
+// `npm run build` and `npm run db:deploy` both run — so switching databases is
+// a connection-string change and nothing else. Every query lives behind
+// lib/db/*.ts, and status fields are strings validated at the application
+// boundary (Zod + lib/db/types.ts) rather than DB enums, so these models are
+// identical on both providers.
 
 generator client {
   provider = "prisma-client-js"

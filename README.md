@@ -34,11 +34,14 @@ idempotent — run it again to reset the data.
 | `npm run check`     | `tsc --noEmit && eslint . && vitest run`                        |
 | `npm run seed`      | Reseed the database and print the credentials table             |
 | `npm run db:migrate`| `prisma migrate dev`                                            |
+| `npm run db:deploy` | Push the schema and seed it — used against a hosted Postgres    |
+| `npm run db:provider` | `sqlite` \| `postgresql` — set the Prisma provider by hand    |
 | `node scripts/smoke.mjs` | HTTP walk of every route as every role against a running dev server |
 
 ## Credentials
 
-Every account uses the password **`nirf1234`**.
+Every account uses the password **`nirf1234`** locally, or whatever
+`SEED_PASSWORD` was set to when the database was seeded.
 
 | Email                  | Role        | Owns |
 | ---------------------- | ----------- | ---- |
@@ -99,12 +102,54 @@ stands in for it.
 | `/settings`    | IQAC                |
 | `/method`      | all                 |
 
-### Moving off SQLite
+## Deploying free (Vercel + Neon Postgres)
 
-Change `provider` in `prisma/schema.prisma` to `postgresql`, point
-`DATABASE_URL` at the server, and run `npx prisma migrate dev`. Every query is
-behind `lib/db/*.ts`; status fields are strings validated at the application
-boundary rather than database enums, so no schema logic changes.
+GitHub Pages cannot host this app — Pages serves static files only, and this
+needs a server for login, the database, server actions and route protection.
+Vercel's free Hobby tier plus Neon's free Postgres tier covers it.
+
+Swapping the database is a connection-string change: `scripts/set-db-provider.mjs`
+reads `DATABASE_URL` and rewrites the Prisma provider to match, and both
+`npm run build` and `npm run db:deploy` run it. Nothing in `lib/db/*.ts` or the
+application code differs between the two providers.
+
+**1. Create a free Postgres database.** Sign up at [neon.com](https://neon.com)
+(free tier, no card) and create a project. From the dashboard, copy both
+connection strings — the **pooled** one (host contains `-pooler`) and the
+**direct** one. Supabase and Vercel Postgres work the same way.
+
+**2. Create the schema and seed it,** from your machine, using the **direct**
+URL:
+
+```bash
+DATABASE_URL="postgresql://…direct…?sslmode=require" \
+SEED_PASSWORD="something-private" \
+npm run db:deploy
+```
+
+That flips the provider, pushes the schema and seeds the two cycles and six
+users, printing the credentials table. Run it once.
+
+**3. Deploy on Vercel.** Import `shubhamakshat4/nirf` at
+[vercel.com/new](https://vercel.com/new) and add three environment variables:
+
+| Variable | Value |
+| --- | --- |
+| `DATABASE_URL` | the **pooled** Neon URL (serverless needs the pooler) |
+| `AUTH_SECRET` | a fresh random string — `openssl rand -base64 32` |
+| `AUTH_TRUST_HOST` | `true` |
+
+Deploy. Sign in with `iqac@ssu.edu` and the `SEED_PASSWORD` you chose.
+
+**Note on the free tiers.** Neon's free project suspends after a few minutes
+idle, so the first request after a pause takes a second or two to wake the
+database. Vercel Hobby is for non-commercial use.
+
+### Going back to SQLite
+
+Point `DATABASE_URL` at `file:./dev.db` and run `npm run build` (or
+`npm run db:provider sqlite`). Local development and the test suite use SQLite
+and need no Postgres server.
 
 ## Engine notes
 

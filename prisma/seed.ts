@@ -4,7 +4,9 @@ import { DEFAULT_BANDS, ENTERABLE_IDS, SAMPLE, type IndicatorId } from "../lib/e
 
 const prisma = new PrismaClient();
 
-const PASSWORD = "nirf1234";
+// Defaults to the documented dev password; override with SEED_PASSWORD before
+// seeding a public database so the IQAC account is not publicly guessable.
+const PASSWORD = process.env.SEED_PASSWORD || "nirf1234";
 
 const USERS: { email: string; name: string; role: string; ownedParams: string }[] = [
   { email: "iqac@ssu.edu", name: "IQAC Coordinator", role: "IQAC", ownedParams: "" },
@@ -106,7 +108,7 @@ async function main() {
   console.log(`\nSeeded "${inst.name}" (${inst.category}) — base ${inst.baseYear}, target ${inst.targetBand} by ${inst.targetYear}`);
   console.log(`  Cycle 2026 DRAFT  — ${entries2026} entries, all VERIFIED`);
   console.log(`  Cycle 2025 LOCKED — ${entries2025} entries at 88% of 2026`);
-  console.log("\nCredentials (password for every account: nirf1234)\n");
+  console.log(`\nCredentials (password for every account: ${PASSWORD})\n`);
   console.table(
     USERS.map((u) => ({
       email: u.email,

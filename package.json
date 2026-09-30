@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/set-db-provider.mjs --auto && prisma generate && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -13,7 +13,9 @@
     "check": "tsc --noEmit && eslint . && vitest run",
     "db:migrate": "prisma migrate dev",
     "seed": "prisma db seed",
-    "setup": "prisma migrate dev --name init && prisma db seed"
+    "setup": "prisma migrate dev --name init && prisma db seed",
+    "db:deploy": "node scripts/set-db-provider.mjs --auto && prisma db push && prisma db seed",
+    "db:provider": "node scripts/set-db-provider.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
