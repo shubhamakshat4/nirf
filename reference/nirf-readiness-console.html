@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NIRF Readiness Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF1EF; --panel:#FFFFFF; --panel-2:#F7F9F8;
+  --ink:#14201C; --ink-2:#37473F; --muted:#67756F;
+  --line:#D5DDD9; --line-2:#E6ECE9;
+  --seal:#0F6B52; --seal-soft:#DCEAE4;
+  --ochre:#B4762A; --ochre-soft:#F3E7D3;
+  --clay:#A33529; --clay-soft:#F5DFDB;
+  --focus:#0F6B52;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0E1614; --panel:#16211E; --panel-2:#1B2723;
+    --ink:#E7EEEA; --ink-2:#BCC9C3; --muted:#8B9A93;
+    --line:#2C3A35; --line-2:#22302B;
+    --seal:#4BBF99; --seal-soft:#17352C;
+    --ochre:#D9A355; --ochre-soft:#3A2E19;
+    --clay:#E0776A; --clay-soft:#3C201C;
+    --focus:#4BBF99;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0E1614; --panel:#16211E; --panel-2:#1B2723;
+  --ink:#E7EEEA; --ink-2:#BCC9C3; --muted:#8B9A93;
+  --line:#2C3A35; --line-2:#22302B;
+  --seal:#4BBF99; --seal-soft:#17352C;
+  --ochre:#D9A355; --ochre-soft:#3A2E19;
+  --clay:#E0776A; --clay-soft:#3C201C;
+  --focus:#4BBF99;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:15px;line-height:1.5;font-variant-numeric:tabular-nums;
+}
+h1,h2,h3,h4,.display{font-family:"Bricolage Grotesque","IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;font-weight:600;letter-spacing:-0.015em;margin:0}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------- shell ---------- */
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px 80px}
+header.top{border-bottom:1px solid var(--line);background:var(--panel)}
+.topbar{max-width:1240px;margin:0 auto;padding:14px 20px;display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+.brand{font-size:19px;font-weight:700;letter-spacing:-0.02em}
+.brand span{color:var(--seal)}
+.topbar .sub{color:var(--muted);font-size:13px;flex:1;min-width:180px}
+.tinybtn{background:none;border:1px solid var(--line);color:var(--ink-2);padding:5px 11px;border-radius:999px;cursor:pointer;font-size:13px}
+.tinybtn:hover{border-color:var(--seal);color:var(--seal)}
+
+/* ---------- readout ---------- */
+.readout{background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.readout-inner{max-width:1240px;margin:0 auto;padding:18px 20px 12px;display:grid;grid-template-columns:minmax(150px,200px) 1fr;gap:24px;align-items:center}
+.scorebox .num{font-family:"Bricolage Grotesque",sans-serif;font-size:54px;line-height:0.92;font-weight:700;letter-spacing:-0.04em}
+.scorebox .cap{font-size:12.5px;color:var(--muted);margin-top:6px}
+.verdict{font-size:14px;margin-top:9px;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:500;border:1px solid transparent}
+.pill.ok{background:var(--seal-soft);color:var(--seal);border-color:var(--seal)}
+.pill.warn{background:var(--ochre-soft);color:var(--ochre);border-color:var(--ochre)}
+.pill.bad{background:var(--clay-soft);color:var(--clay);border-color:var(--clay)}
+.pill.plain{background:var(--panel-2);color:var(--muted);border-color:var(--line)}
+@media (max-width:720px){
+  .readout-inner{grid-template-columns:1fr;gap:12px;padding:14px 16px 10px}
+  .scorebox{display:flex;align-items:baseline;gap:12px}
+  .scorebox .num{font-size:40px}
+  .scorebox .cap{margin-top:0}
+}
+
+/* ---------- nav rail ---------- */
+.body{display:grid;grid-template-columns:184px 1fr;gap:28px;margin-top:26px}
+nav.rail{position:sticky;top:150px;align-self:start}
+nav.rail button{display:block;width:100%;text-align:left;background:none;border:0;border-left:2px solid var(--line-2);
+  padding:9px 12px;color:var(--muted);cursor:pointer;font-size:14.5px}
+nav.rail button strong{display:block;font-weight:500;color:var(--ink-2)}
+nav.rail button small{font-size:12px;color:var(--muted)}
+nav.rail button[aria-current="true"]{border-left-color:var(--seal);background:var(--panel)}
+nav.rail button[aria-current="true"] strong{color:var(--seal);font-weight:600}
+@media (max-width:860px){
+  .body{grid-template-columns:1fr;gap:16px;margin-top:14px}
+  nav.rail{position:sticky;top:96px;z-index:15;background:var(--paper);overflow-x:auto;white-space:nowrap;display:flex;gap:4px;border-bottom:1px solid var(--line);padding-bottom:2px}
+  nav.rail button{width:auto;border-left:0;border-bottom:2px solid transparent;padding:8px 12px}
+  nav.rail button small{display:none}
+  nav.rail button[aria-current="true"]{border-bottom-color:var(--seal);background:none}
+}
+
+/* ---------- panels ---------- */
+.panel{background:var(--panel);border:1px solid var(--line);padding:22px;margin-bottom:18px}
+.panel > h2{font-size:20px;margin-bottom:4px}
+.panel > .lede{color:var(--muted);font-size:14px;max-width:68ch;margin-bottom:18px}
+.view[hidden]{display:none}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px 22px}
+label.field{display:block;font-size:13.5px;color:var(--ink-2)}
+label.field .lab{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:4px}
+label.field .unit{color:var(--muted);font-size:12px}
+input[type=number],input[type=text],select{
+  width:100%;padding:7px 9px;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:2px}
+input[type=number]:focus,select:focus{border-color:var(--seal);background:var(--panel)}
+.help{color:var(--muted);font-size:12.5px;margin-top:5px}
+hr.rule{border:0;border-top:1px solid var(--line-2);margin:22px 0}
+
+/* ---------- ruler ---------- */
+.ruler{width:100%;height:92px;display:block}
+@media (max-width:720px){.ruler{height:104px}}
+
+/* ---------- tables ---------- */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:12.5px;padding:0 10px 7px 0;border-bottom:1px solid var(--line)}
+td{padding:9px 10px 9px 0;border-bottom:1px solid var(--line-2);vertical-align:top}
+td.n,th.n{text-align:right;padding-right:14px}
+.tablewrap{overflow-x:auto}
+
+/* ---------- parameter bars ---------- */
+.pbar{display:grid;grid-template-columns:52px 1fr 108px;gap:12px;align-items:center;margin-bottom:11px}
+.pbar .nm{font-weight:600;font-size:14px}
+.pbar .track{height:15px;background:var(--panel-2);border:1px solid var(--line-2);position:relative}
+.pbar .fill{height:100%;background:var(--seal)}
+.pbar .tgt{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ochre)}
+.pbar .val{font-size:13px;color:var(--muted);text-align:right}
+
+/* ---------- indicator rows ---------- */
+.indhead{display:flex;justify-content:space-between;align-items:baseline;gap:14px;margin:26px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.indhead h3{font-size:16px}
+.indhead .sc{font-size:13px;color:var(--muted)}
+.ind{display:grid;grid-template-columns:1fr 104px 84px;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line-2)}
+.ind .nm{font-size:13.5px}
+.ind .nm em{font-style:normal;color:var(--muted);font-size:12px;display:block}
+.ind input,.ind select{padding:5px 7px;font-size:13.5px}
+.ind .mini{height:7px;background:var(--panel-2);border:1px solid var(--line-2);position:relative}
+.ind .mini i{display:block;height:100%;background:var(--seal)}
+.ind .pct{font-size:11.5px;color:var(--muted);margin-top:3px;display:block}
+@media (max-width:560px){.ind{grid-template-columns:1fr 92px;gap:8px}.ind .meter{grid-column:1/-1}}
+
+/* ---------- roadmap ---------- */
+.yearblk{border-left:2px solid var(--line);padding:0 0 22px 18px;position:relative}
+.yearblk::before{content:"";position:absolute;left:-6px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--seal)}
+.yearblk.future::before{background:var(--panel);border:2px solid var(--line)}
+.yearblk h4{font-size:15.5px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.yearblk h4 .chk{font-size:12.5px;color:var(--muted);font-weight:400}
+.yearblk ul{margin:9px 0 0;padding-left:0;list-style:none}
+.yearblk li{padding:6px 0 6px 0;border-bottom:1px dotted var(--line-2);font-size:13.5px;display:grid;grid-template-columns:1fr auto;gap:12px}
+.yearblk li .mv{color:var(--muted);font-size:12.5px;white-space:nowrap}
+
+/* ---------- sliders ---------- */
+.slider{display:grid;grid-template-columns:52px 1fr 92px;gap:12px;align-items:center;margin-bottom:14px}
+input[type=range]{width:100%;accent-color:var(--seal)}
+.chip{display:inline-flex;gap:0;border:1px solid var(--line);border-radius:2px;overflow:hidden;flex-wrap:wrap}
+.chip button{background:var(--panel-2);border:0;border-right:1px solid var(--line);padding:6px 12px;cursor:pointer;font-size:13px;color:var(--ink-2)}
+.chip button:last-child{border-right:0}
+.chip button[aria-pressed="true"]{background:var(--seal);color:#fff}
+.btn{background:var(--seal);color:#fff;border:0;padding:9px 16px;border-radius:2px;cursor:pointer;font-weight:500}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--ink-2)}
+.btn:hover{opacity:.92}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.note{background:var(--panel-2);border-left:2px solid var(--line);padding:11px 14px;font-size:13px;color:var(--ink-2);margin:16px 0}
+.note strong{font-weight:600}
+footer.foot{max-width:1240px;margin:0 auto;padding:26px 20px 40px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);margin-top:30px}
+.spark{width:100%;height:220px;display:block}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="topbar">
+    <div class="brand">NIRF Readiness <span>Console</span></div>
+    <div class="sub">Hierarchical weighted model · 79 indicators · TLR 30 · RP 30 · GO 20 · OI 10 · PR 10</div>
+    <button class="tinybtn" id="loadSample">Load sample university</button>
+    <button class="tinybtn" id="clearAll">Clear all data</button>
+    <button class="tinybtn" id="themeBtn">Switch theme</button>
+  </div>
+</header>
+
+<section class="readout">
+  <div class="readout-inner">
+    <div class="scorebox">
+      <div class="num" id="bigScore">—</div>
+      <div>
+        <div class="cap">Composite readiness score</div>
+        <div class="verdict" id="verdict"></div>
+      </div>
+    </div>
+    <svg class="ruler" id="ruler" viewBox="0 0 900 92" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Readiness score against rank bands"></svg>
+  </div>
+</section>
+
+<div class="wrap">
+<div class="body">
+
+  <nav class="rail" id="rail" aria-label="Sections">
+    <button data-v="setup" aria-current="true"><strong>Setup</strong><small>Category, goal, year</small></button>
+    <button data-v="data"><strong>Data</strong><small>79 indicators</small></button>
+    <button data-v="gaps"><strong>Gaps</strong><small>What to fix first</small></button>
+    <button data-v="plan"><strong>Plan</strong><small>Year-by-year roadmap</small></button>
+    <button data-v="lab"><strong>Scenarios</strong><small>Tweak and compare</small></button>
+    <button data-v="method"><strong>Method</strong><small>How this computes</small></button>
+  </nav>
+
+  <main>
+
+  <!-- ============ SETUP ============ -->
+  <section class="view" data-view="setup">
+    <div class="panel">
+      <h2>What you are aiming at</h2>
+      <p class="lede">Set the ranking category, the band you want to reach, and the year you want to reach it by. Everything downstream — gaps, roadmap, timelines — recalculates from these three choices.</p>
+      <div class="grid2">
+        <label class="field"><span class="lab"><span>Institution name</span></span>
+          <input type="text" id="instName" placeholder="e.g. Sri Sri University"></label>
+        <label class="field"><span class="lab"><span>Ranking category</span></span>
+          <select id="category"></select>
+          <span class="help" id="catWeights"></span></label>
+        <label class="field"><span class="lab"><span>Target band</span></span>
+          <select id="goal"></select>
+          <span class="help" id="goalHelp"></span></label>
+        <label class="field"><span class="lab"><span>Target year</span></span>
+          <input type="number" id="targetYear" min="2027" max="2045" step="1">
+          <span class="help">Submission cycle you want to hit.</span></label>
+        <label class="field"><span class="lab"><span>Base year</span></span>
+          <input type="number" id="baseYear" min="2020" max="2040" step="1">
+          <span class="help">Year your entered data describes.</span></label>
+        <label class="field"><span class="lab"><span>Peer benchmark ceiling</span></span>
+          <select id="peerBand">
+            <option value="1">Top-25 national performance</option>
+            <option value="0.8">Top-100 national performance</option>
+            <option value="0.62">Regional leader</option>
+          </select>
+          <span class="help">What a score of 100 on each indicator means.</span></label>
+      </div>
+      <hr class="rule">
+      <div class="row">
+        <label class="field" style="flex:1;min-width:240px"><span class="lab"><span>Size-normalise count indicators</span></span>
+          <select id="sizeNorm">
+            <option value="1">On — compare counts per 1,000 students</option>
+            <option value="0">Off — compare raw counts</option>
+          </select>
+          <span class="help">Keeps a 3,000-student university from being judged against a 20,000-student one on raw publication and faculty counts.</span></label>
+      </div>
+      <div class="note" id="bandEditor"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Submission readiness</h2>
+      <p class="lede">NIRF is a data exercise before it is a performance exercise. An indicator you cannot evidence scores zero regardless of reality.</p>
+      <div id="completeness"></div>
+      <div class="note">
+        <strong>Before the first submission:</strong> appoint a nodal officer, get three consecutive years of audited financials, reconcile student and faculty counts across departments, pull Scopus and Web of Science exports under a single institution ID, and archive placement offer letters. Unreconciled departmental data is the most common reason a first submission underperforms the institution's actual standing.
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DATA ============ -->
+  <section class="view" data-view="data" hidden>
+    <div class="panel">
+      <h2>Institutional data</h2>
+      <p class="lede">Enter what you have. Blank fields count as zero and are flagged as evidence gaps rather than performance gaps. Every number you change updates the score, the gaps and the timeline immediately.</p>
+      <div id="dataForm"></div>
+    </div>
+  </section>
+
+  <!-- ============ GAPS ============ -->
+  <section class="view" data-view="gaps" hidden>
+    <div class="panel">
+      <h2>Where you stand</h2>
+      <p class="lede">Parameter scores against the target band. The ochre marker is the score each parameter needs to carry for the composite to clear your target.</p>
+      <div id="paramBars"></div>
+      <hr class="rule">
+      <div class="tablewrap"><table id="gapTable"></table></div>
+      <p class="help" style="margin-top:10px">Priority index follows the paper's formulation: percentage gap weighted by the parameter's contribution to the composite.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Highest-leverage moves</h2>
+      <p class="lede">Ranked by score gained per unit of effort — sub-parameter weight × parameter weight × remaining gap, divided by how hard the move is. The top of this list is where the next rupee and the next hire should go.</p>
+      <div class="tablewrap"><table id="leverTable"></table></div>
+    </div>
+  </section>
+
+  <!-- ============ PLAN ============ -->
+  <section class="view" data-view="plan" hidden>
+    <div class="panel">
+      <h2>Trajectory</h2>
+      <p class="lede" id="trajLede"></p>
+      <svg class="spark" id="traj" viewBox="0 0 900 220" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Projected readiness score by year"></svg>
+      <div id="trajVerdict"></div>
+    </div>
+    <div class="panel">
+      <h2>Roadmap</h2>
+      <p class="lede">Each year lists the moves that buy the most score that year, with the value to hit. These are derived from your own numbers, not a generic checklist.</p>
+      <div class="row" style="margin-bottom:18px">
+        <button class="btn ghost" id="copyPlan">Copy plan as text</button>
+      </div>
+      <div id="roadmap"></div>
+    </div>
+  </section>
+
+  <!-- ============ LAB ============ -->
+  <section class="view" data-view="lab" hidden>
+    <div class="panel">
+      <h2>Scenario lab</h2>
+      <p class="lede">Set how hard you intend to push each parameter, then read the new arrival year. Effort costs money and attention, so pushing everything at once is usually the least honest scenario.</p>
+      <div id="sliders"></div>
+      <hr class="rule">
+      <div class="row">
+        <button class="btn ghost" data-preset="hold">Hold steady</button>
+        <button class="btn ghost" data-preset="balanced">Balanced push</button>
+        <button class="btn ghost" data-preset="research">Research-first</button>
+        <button class="btn ghost" data-preset="outcomes">Outcomes-first</button>
+        <button class="btn ghost" data-preset="max">Everything at once</button>
+      </div>
+      <div id="labOut"></div>
+    </div>
+    <div class="panel">
+      <h2>Saved scenarios</h2>
+      <p class="lede">Snapshot the current settings to compare arrival years side by side.</p>
+      <div class="row" style="margin-bottom:16px">
+        <input type="text" id="scName" placeholder="Scenario name" style="max-width:240px">
+        <button class="btn" id="saveSc">Save scenario</button>
+      </div>
+      <div class="tablewrap"><table id="scTable"></table></div>
+    </div>
+  </section>
+
+  <!-- ============ METHOD ============ -->
+  <section class="view" data-view="method" hidden>
+    <div class="panel">
+      <h2>How this computes</h2>
+      <p class="lede">Three levels, exactly as set out in the source model.</p>
+      <p style="max-width:68ch;font-size:14px">Raw indicators are min–max normalised to 0–100 against a peer band, weighted into five parameter scores, and combined into a composite using the official category weights. The timeline layer is an addition to the paper: each indicator carries a plausible annual gap-closure rate and a lag, and the model runs that forward year by year until the composite clears your target band.</p>
+      <hr class="rule">
+      <h3 style="font-size:15px;margin-bottom:8px">What is modelled honestly</h3>
+      <ul style="font-size:13.5px;color:var(--ink-2);max-width:68ch;padding-left:18px">
+        <li>Lags are real. Citations, h-index, granted patents and perception scores do not respond in the year you act — they are held for two to three years before movement registers.</li>
+        <li>Fast indicators are fast. Internships, certifications, MoUs, accessibility compliance and recruiter engagement can move substantially within a year.</li>
+        <li>Slow indicators are slow. Permanent faculty share, experienced faculty, graduation rate and peer perception move a fraction of their gap per year no matter how hard you push.</li>
+        <li>Nothing exceeds the peer ceiling. The model will not let you plan your way past the best performance in your band.</li>
+      </ul>
+      <hr class="rule">
+      <h3 style="font-size:15px;margin-bottom:8px">What is an assumption</h3>
+      <ul style="font-size:13.5px;color:var(--ink-2);max-width:68ch;padding-left:18px">
+        <li>The composite here is a readiness index on a 0–100 scale of this model's own construction. It is not the published NIRF score and will not equal it. Calibrate the band thresholds against published scores for your category before treating an arrival year as a commitment.</li>
+        <li>Sub-parameter weights are the paper's proposed weights, which are rationale-based rather than empirically fitted. The official NIRF methodology differs by category and year.</li>
+        <li>Perception indicators X71–X79 are the paper's own predictor variables, not official NIRF perception inputs.</li>
+        <li>Benchmark floors and ceilings are seeded for a mid-size Indian multidisciplinary university. Replace them with your actual peer cohort's values for a defensible forecast.</li>
+      </ul>
+      <hr class="rule">
+      <h3 style="font-size:15px;margin-bottom:8px">Indicator engine settings</h3>
+      <p class="help">Floors, ceilings, annual gap-closure rates and lags, all editable in the data below if you fork this page.</p>
+      <div class="tablewrap"><table id="engineTable"></table></div>
+    </div>
+  </section>
+
+  </main>
+</div>
+</div>
+
+<footer class="foot">
+  Built on the hierarchical weighted composite model (TLR, RP, GO, OI, PR → X1–X79). Scores are a readiness index, not an official NIRF score. Data stays in this browser.
+</footer>
+
+<script>
+/* =========================================================================
+   INDICATOR TABLE
+   p: parameter | w: weight within parameter (%) | min/max: peer band floor & ceiling
+   perK: floor/ceiling expressed per 1,000 students | inv: lower is better
+   rate: fraction of remaining gap closable per year at steady push
+   lag: years before improvement registers | eff: effort 1 low, 2 medium, 3 high
+   ========================================================================= */
+const IND = [
+// --- TLR (15) ---
+{id:"X1", p:"TLR",w:5, nm:"Total student strength",u:"students",min:1000,max:15000,pace:3.0,lag:0,eff:2,act:"Grow enrolment through new programmes and better admissions conversion"},
+{id:"X2", p:"TLR",w:8, nm:"Total faculty strength",u:"faculty",min:15,max:100,perK:1,pace:4.5,lag:0,eff:3,act:"Recruit teaching faculty across departments"},
+{id:"X3", p:"TLR",w:10,nm:"Permanent faculty",u:"faculty",min:10,max:90,perK:1,pace:4.0,lag:0,eff:3,act:"Convert contractual posts to regular appointments and fill sanctioned vacancies"},
+{id:"X4", p:"TLR",w:10,nm:"PhD-qualified faculty",u:"faculty",min:5,max:80,perK:1,pace:4.5,lag:0,eff:3,act:"Hire doctorate holders and fund PhD completion for serving faculty"},
+{id:"X5", p:"TLR",w:15,nm:"Students per faculty member",u:"1:N",min:8,max:40,inv:1,der:"X1 \u00f7 X2",pace:0,lag:0,eff:3,act:"Falls as faculty hiring outpaces intake growth"},
+{id:"X6", p:"TLR",w:8, nm:"Faculty with 10+ years experience",u:"faculty",min:5,max:45,perK:1,pace:2.0,lag:1,eff:3,act:"Retain senior faculty and recruit mid-career academics"},
+{id:"X7", p:"TLR",w:5, nm:"Total academic programmes",u:"programmes",min:10,max:80,pace:5.0,lag:0,eff:2,act:"Launch programmes where faculty depth already exists"},
+{id:"X8", p:"TLR",w:8, nm:"Annual recurring expenditure",u:"\u20b9 crore",min:4,max:60,perK:1,pace:4.0,lag:0,eff:3,act:"Raise the operating budget per student"},
+{id:"X9", p:"TLR",w:5, nm:"Capital expenditure",u:"\u20b9 crore",min:1,max:25,perK:1,pace:6.0,lag:0,eff:3,act:"Commit a multi-year capital plan for buildings and major equipment"},
+{id:"X10",p:"TLR",w:8, nm:"Expenditure per student",u:"\u20b9 lakh",min:0.5,max:6,der:"(X8 + X9) \u00f7 X1",pace:0,lag:0,eff:3,act:"Follows total spend against enrolment"},
+{id:"X11",p:"TLR",w:5, nm:"Laboratory and learning-resource spend",u:"\u20b9 crore",min:0.1,max:6,perK:1,pace:7.0,lag:0,eff:2,act:"Ring-fence a lab equipment and consumables budget"},
+{id:"X12",p:"TLR",w:4, nm:"Library and digital resources",u:"'000 titles",min:4,max:250,pace:11,lag:0,eff:1,act:"Join major e-resource consortia and widen database access"},
+{id:"X13",p:"TLR",w:4, nm:"Number of laboratories",u:"labs",min:1.5,max:20,perK:1,pace:6.0,lag:0,eff:2,act:"Commission additional teaching and research labs"},
+{id:"X14",p:"TLR",w:2, nm:"Sanctioned intake capacity",u:"seats/yr",min:300,max:5000,pace:4.0,lag:0,eff:2,act:"Seek regulatory approval for higher sanctioned intake"},
+{id:"X15",p:"TLR",w:3, nm:"Accreditation and quality grade",u:"index 0\u2013100",min:0,max:100,pace:2.2,lag:1,eff:3,sel:"accred",act:"Move up the NAAC grade and add NBA programme accreditations"},
+// --- RP (22) ---
+{id:"X16",p:"RP",w:5, nm:"Total research publications",u:"papers/yr",min:5,max:300,perK:1,pace:8.0,lag:0,eff:2,act:"Set departmental publication targets and review them at appraisal"},
+{id:"X17",p:"RP",w:3, nm:"Scopus-indexed publications",u:"papers/yr",min:2,max:240,perK:1,pace:8.0,lag:0,eff:2,act:"Steer submissions to indexed venues and drop predatory outlets"},
+{id:"X18",p:"RP",w:3, nm:"WoS / SCI / SCIE publications",u:"papers/yr",min:1,max:180,perK:1,pace:6.5,lag:0,eff:2,act:"Target SCIE-listed journals in the strongest departments"},
+{id:"X19",p:"RP",w:7, nm:"Q1 / Q2 publications",u:"papers/yr",min:0.4,max:120,perK:1,pace:5.0,lag:1,eff:3,act:"Run a quartile-first policy with internal review before submission"},
+{id:"X20",p:"RP",w:6, nm:"Total citations",u:"citations",min:10,max:3000,perK:1,pace:4.0,lag:2,eff:2,act:"Build the citation base through open access and visible co-authorship"},
+{id:"X21",p:"RP",w:6, nm:"Citations per publication",u:"ratio",min:0.3,max:20,der:"X20 \u00f7 X16",pace:0,lag:2,eff:3,act:"Rises only if citations grow faster than output"},
+{id:"X22",p:"RP",w:7, nm:"Institutional h-index",u:"index",min:3,max:90,pace:2.0,lag:2,eff:3,act:"Sustain quality output \u2014 moves only on multi-year consistency"},
+{id:"X23",p:"RP",w:3, nm:"Patents filed",u:"filings/yr",min:0.05,max:15,perK:1,pace:11,lag:0,eff:1,act:"Run an IPR cell with drafting support and filing fees covered"},
+{id:"X24",p:"RP",w:6, nm:"Patents granted",u:"grants",min:0.1,max:6,perK:1,pace:3.5,lag:2,eff:2,act:"Prosecute filings to grant \u2014 budget for examination responses"},
+{id:"X25",p:"RP",w:2, nm:"Copyrights, designs and other IPR",u:"registrations",min:0.2,max:8,perK:1,pace:13,lag:0,eff:1,act:"Register software, design and creative outputs already produced"},
+{id:"X26",p:"RP",w:4, nm:"Sponsored research projects",u:"projects",min:0.2,max:20,perK:1,pace:6.0,lag:1,eff:2,act:"Set a proposal submission quota with pre-award support"},
+{id:"X27",p:"RP",w:7, nm:"Sponsored research funding",u:"\u20b9 crore",min:0.1,max:20,perK:1,pace:5.0,lag:1,eff:3,act:"Pursue larger multi-investigator grants, not only small individual ones"},
+{id:"X28",p:"RP",w:2, nm:"Consultancy projects",u:"projects",min:0.05,max:10,perK:1,pace:9.0,lag:0,eff:1,act:"Formalise consultancy through an institutional route with revenue sharing"},
+{id:"X29",p:"RP",w:4, nm:"Consultancy income",u:"\u20b9 crore",min:0.01,max:4,perK:1,pace:7.0,lag:1,eff:2,act:"Package testing, advisory and training services for industry"},
+{id:"X30",p:"RP",w:3, nm:"PhD scholars enrolled",u:"scholars",min:1,max:80,perK:1,pace:7.0,lag:0,eff:2,act:"Expand funded fellowships and recognised supervisor capacity"},
+{id:"X31",p:"RP",w:6, nm:"PhD graduates",u:"awards/yr",min:0.2,max:20,perK:1,pace:3.0,lag:3,eff:2,act:"Clear the thesis pipeline \u2014 enrolment three years ago sets this year's number"},
+{id:"X32",p:"RP",w:4, nm:"International collaborations",u:"active",min:0,max:60,pace:9.0,lag:1,eff:2,act:"Convert MoUs into co-authored output and joint proposals"},
+{id:"X33",p:"RP",w:4, nm:"Industry collaborations",u:"active",min:0,max:80,pace:9.5,lag:0,eff:2,act:"Sign working R&D agreements with named deliverables"},
+{id:"X34",p:"RP",w:5, nm:"Research expenditure",u:"\u20b9 crore",min:0.05,max:15,perK:1,pace:5.5,lag:0,eff:3,act:"Allocate an internal research fund independent of external grants"},
+{id:"X35",p:"RP",w:3, nm:"Research awards",u:"awards",min:0,max:40,pace:4.0,lag:1,eff:2,act:"Nominate faculty systematically for national fellowships and awards"},
+{id:"X36",p:"RP",w:3, nm:"Technology transfer and commercialisation",u:"outcomes",min:0,max:20,pace:2.5,lag:2,eff:3,act:"Set up a technology transfer office with licensing capability"},
+{id:"X37",p:"RP",w:7, nm:"High-impact publications",u:"papers",min:0.2,max:80,perK:1,pace:3.5,lag:1,eff:3,act:"Fund a small number of flagship research groups properly"},
+// --- GO (15) ---
+{id:"X38",p:"GO",w:4, nm:"Graduating students",u:"students/yr",min:120,max:400,perK:1,pace:4.0,lag:1,eff:1,act:"Grow the completing cohort in step with intake"},
+{id:"X39",p:"GO",w:6, nm:"Students successfully graduated",u:"students/yr",min:100,max:390,perK:1,der:"X38 \u00d7 X40",pace:0,lag:1,eff:2,act:"Follows cohort size and graduation rate"},
+{id:"X40",p:"GO",w:10,nm:"Graduation rate",u:"%",min:55,max:99,pace:2.5,lag:1,eff:2,act:"Mentor at-risk students and clear backlog bottlenecks"},
+{id:"X41",p:"GO",w:8, nm:"Pass percentage",u:"%",min:45,max:99,pace:4.5,lag:0,eff:2,act:"Strengthen remedial teaching and continuous assessment"},
+{id:"X42",p:"GO",w:8, nm:"Students placed",u:"students/yr",min:30,max:350,perK:1,der:"X38 \u00d7 X43",pace:0,lag:0,eff:2,act:"Follows cohort size and placement rate"},
+{id:"X43",p:"GO",w:14,nm:"Placement percentage",u:"%",min:25,max:98,pace:5.0,lag:0,eff:2,act:"Run structured placement preparation from the penultimate year and widen the recruiter base"},
+{id:"X44",p:"GO",w:8, nm:"Median salary",u:"\u20b9 lakh/yr",min:2,max:20,pace:2.8,lag:1,eff:3,act:"Move up the recruiter tier rather than adding volume recruiters"},
+{id:"X45",p:"GO",w:6, nm:"Average salary",u:"\u20b9 lakh/yr",min:2.5,max:28,pace:2.8,lag:1,eff:3,act:"Attract higher-paying roles through specialised skill tracks"},
+{id:"X46",p:"GO",w:5, nm:"Students entering higher education",u:"students/yr",min:5,max:120,perK:1,der:"X38 \u00d7 X47",pace:0,lag:1,eff:1,act:"Follows cohort size and progression rate"},
+{id:"X47",p:"GO",w:6, nm:"Higher-education percentage",u:"%",min:2,max:45,pace:4.5,lag:1,eff:1,act:"Counsel students toward postgraduate pathways and record the outcomes"},
+{id:"X48",p:"GO",w:5, nm:"Students entering research or PhD",u:"students/yr",min:0.5,max:30,perK:1,pace:4.5,lag:1,eff:2,act:"Offer undergraduate research projects that lead into doctoral study"},
+{id:"X49",p:"GO",w:6, nm:"PhD graduates",u:"awards/yr",min:0.2,max:20,perK:1,der:"same as X31",pace:0,lag:3,eff:2,act:"Same figure as X31"},
+{id:"X50",p:"GO",w:6, nm:"Internship participation",u:"%",min:10,max:100,pace:12,lag:0,eff:1,act:"Make a credited internship compulsory in every programme"},
+{id:"X51",p:"GO",w:4, nm:"Professional certification outcomes",u:"certifications/yr",min:10,max:400,perK:1,pace:13,lag:0,eff:1,act:"Embed industry certification tracks into the curriculum"},
+{id:"X52",p:"GO",w:4, nm:"Entrepreneurship and start-up outcomes",u:"ventures",min:0,max:40,pace:6.0,lag:1,eff:2,act:"Fund an incubator with seed support and a mentor network"},
+// --- OI (15) ---
+{id:"X53",p:"OI",w:4, nm:"Total female students",u:"students",min:100,max:550,perK:1,der:"X1 \u00d7 X54",pace:0,lag:0,eff:2,act:"Follows enrolment and gender share"},
+{id:"X54",p:"OI",w:10,nm:"Female student percentage",u:"%",min:10,max:55,pace:4.0,lag:0,eff:2,act:"Set gender-balanced admission goals programme by programme"},
+{id:"X55",p:"OI",w:4, nm:"Female faculty",u:"faculty",min:5,max:45,perK:1,der:"X2 \u00d7 X56",pace:0,lag:0,eff:2,act:"Follows faculty strength and gender share"},
+{id:"X56",p:"OI",w:8, nm:"Female faculty percentage",u:"%",min:10,max:50,pace:4.0,lag:0,eff:2,act:"Apply a gender target to every recruitment round"},
+{id:"X57",p:"OI",w:6, nm:"Students from other states",u:"students",min:30,max:600,perK:1,der:"X1 \u00d7 X58",pace:0,lag:0,eff:2,act:"Follows enrolment and out-of-state share"},
+{id:"X58",p:"OI",w:10,nm:"Regional diversity percentage",u:"%",min:3,max:60,pace:6.0,lag:0,eff:2,act:"Build out-of-state admissions channels and hostel capacity together"},
+{id:"X59",p:"OI",w:6, nm:"International students",u:"students",min:0,max:400,pace:5.0,lag:1,eff:3,act:"Pursue ICCR, Study in India and partner-country pipelines"},
+{id:"X60",p:"OI",w:4, nm:"International faculty",u:"faculty",min:0,max:40,pace:4.5,lag:1,eff:3,act:"Create visiting and adjunct international appointments"},
+{id:"X61",p:"OI",w:10,nm:"Economically disadvantaged students",u:"students",min:10,max:400,perK:1,pace:8.0,lag:0,eff:2,act:"Expand need-based fee waivers and publicise them"},
+{id:"X62",p:"OI",w:10,nm:"Socially disadvantaged students",u:"students",min:20,max:500,perK:1,pace:7.0,lag:0,eff:2,act:"Meet reservation norms fully and support retention"},
+{id:"X63",p:"OI",w:8, nm:"Students with disabilities",u:"students",min:0,max:20,perK:1,pace:6.0,lag:0,eff:2,act:"Make admissions and campus life genuinely accessible, then recruit"},
+{id:"X64",p:"OI",w:8, nm:"Scholarships and financial assistance",u:"\u20b9 crore",min:0.02,max:8,perK:1,pace:9.0,lag:0,eff:2,act:"Increase the scholarship corpus and disburse it on time"},
+{id:"X65",p:"OI",w:5, nm:"Accessible facilities compliance",u:"% compliant",min:0,max:100,pace:15,lag:0,eff:1,act:"Complete ramps, lifts, accessible toilets and assistive technology"},
+{id:"X66",p:"OI",w:3, nm:"Hostels and support facilities",u:"hostels",min:0.3,max:3,perK:1,pace:3.0,lag:1,eff:3,act:"Add hostel capacity \u2014 this gates out-of-state and international intake"},
+{id:"X67",p:"OI",w:4, nm:"Student diversity index",u:"0\u20131",min:0.2,max:0.9,der:"X54, X58, X62",pace:0,lag:0,eff:2,act:"Composite of gender, regional and social representation"},
+// --- PR (12) ---
+{id:"X68",p:"PR",w:20,nm:"Academic peer perception score",u:"/100",min:5,max:95,pace:2.0,lag:2,eff:3,act:"Earn peer standing through visible research, conferences and editorial roles"},
+{id:"X69",p:"PR",w:20,nm:"Employer perception score",u:"/100",min:5,max:95,pace:2.4,lag:2,eff:3,act:"Build recruiter confidence through consistent graduate quality"},
+{id:"X70",p:"PR",w:15,nm:"Overall perception score",u:"/100",min:5,max:95,der:"mean of X68, X69",pace:0,lag:2,eff:3,act:"Follows peer and employer perception"},
+{id:"X71",p:"PR",w:8, nm:"National and international awards",u:"awards",min:0,max:30,pace:5.0,lag:1,eff:2,act:"Apply for institutional excellence awards and recognitions"},
+{id:"X72",p:"PR",w:6, nm:"Major academic recognitions",u:"recognitions",min:0,max:25,pace:5.0,lag:1,eff:2,act:"Pursue centre-of-excellence status and council recognitions"},
+{id:"X73",p:"PR",w:6, nm:"Industry collaborations (visibility)",u:"active",min:0,max:80,der:"same as X33",pace:0,lag:0,eff:1,act:"Same figure as X33"},
+{id:"X74",p:"PR",w:6, nm:"International academic collaborations",u:"active",min:0,max:60,der:"same as X32",pace:0,lag:1,eff:2,act:"Same figure as X32"},
+{id:"X75",p:"PR",w:6, nm:"Distinguished alumni achievements",u:"alumni",min:0,max:40,pace:2.2,lag:3,eff:2,act:"Build an alumni relations office and document achievements"},
+{id:"X76",p:"PR",w:5, nm:"National and international visibility",u:"instances",min:0,max:50,pace:8.0,lag:1,eff:1,act:"Host national events and place faculty on government and sector panels"},
+{id:"X77",p:"PR",w:4, nm:"Accreditation and recognition status",u:"index 0\u2013100",min:0,max:100,der:"same as X15",pace:0,lag:1,eff:3,act:"Same figure as X15"},
+{id:"X78",p:"PR",w:2, nm:"Media and academic visibility",u:"mentions/yr",min:0,max:200,pace:12,lag:0,eff:1,act:"Run a communications function that places research stories"},
+{id:"X79",p:"PR",w:2, nm:"Employer engagement",u:"recruiters",min:0,max:250,pace:10,lag:0,eff:1,act:"Bring recruiters on campus for lectures and projects year-round"}
+];
+
+/* Indicators computed from others — the source model treats several of these
+   as the same underlying data point, so they are never entered twice. */
+const DERIVE = {
+  X5:  v => v.X2>0 ? v.X1/v.X2 : undefined,
+  X10: v => v.X1>0 ? (v.X8+v.X9)*100/v.X1 : undefined,
+  X21: v => v.X16>0 ? v.X20/v.X16 : undefined,
+  X39: v => v.X38*v.X40/100,
+  X42: v => v.X38*v.X43/100,
+  X46: v => v.X38*v.X47/100,
+  X49: v => v.X31,
+  X53: v => v.X1*v.X54/100,
+  X55: v => v.X2*v.X56/100,
+  X57: v => v.X1*v.X58/100,
+  X67: v => Math.min(v.X54,50)/50*0.4 + Math.min(v.X58,50)/50*0.3 + Math.min(v.X1>0?v.X62/v.X1*100:0,40)/40*0.3,
+  X70: v => (v.X68+v.X69)/2,
+  X73: v => v.X33,
+  X74: v => v.X32,
+  X77: v => v.X15
+};
+const DERIVED_IDS = Object.keys(DERIVE);
+const IS_DER = id => DERIVED_IDS.includes(id);
+function withDerived(raw){
+  const v={}; for(const i of IND) v[i.id] = raw[i.id]||0;
+  for(const id of DERIVED_IDS){ const r=DERIVE[id](v); if(r!==undefined && isFinite(r)) v[id]=r; }
+  return v;
+}
+/* Global brake on how fast any plan can move. 1.0 would mean an institution
+   pushing on all fronts closes roughly 5 composite points a year, which is
+   faster than the published record supports. */
+const PACE_K = 0.7;
+
+const ACCRED = [["Not accredited",0],["NAAC B",40],["NAAC B+",48],["NAAC B++",56],["NAAC A",70],["NAAC A+",82],["NAAC A++",95]];
+
+const PARAM_NAMES = {TLR:"Teaching, Learning & Resources",RP:"Research & Professional Practice",GO:"Graduation Outcomes",OI:"Outreach & Inclusivity",PR:"Perception"};
+const PKEYS = ["TLR","RP","GO","OI","PR"];
+
+const CATEGORIES = {
+  overall:      {nm:"Overall",              w:{TLR:.30,RP:.30,GO:.20,OI:.10,PR:.10}},
+  university:   {nm:"University",           w:{TLR:.30,RP:.30,GO:.20,OI:.10,PR:.10}},
+  engineering:  {nm:"Engineering",          w:{TLR:.30,RP:.30,GO:.20,OI:.10,PR:.10}},
+  management:   {nm:"Management",           w:{TLR:.30,RP:.30,GO:.20,OI:.10,PR:.10}},
+  college:      {nm:"College",              w:{TLR:.30,RP:.20,GO:.25,OI:.15,PR:.10}},
+  research:     {nm:"Research Institutions",w:{TLR:.25,RP:.40,GO:.15,OI:.10,PR:.10}},
+  statepublic:  {nm:"State Public Universities",w:{TLR:.30,RP:.25,GO:.20,OI:.15,PR:.10}}
+};
+
+const BANDS = [
+  {k:"b200", nm:"Ranked (101–200 band)", t:30},
+  {k:"b100", nm:"Top 100",  t:42},
+  {k:"b50",  nm:"Top 50",   t:55},
+  {k:"b25",  nm:"Top 25",   t:68},
+  {k:"b10",  nm:"Top 10",   t:80}
+];
+
+const SAMPLE_RAW = {X1:6850,X2:412,X3:365,X4:298,X5:16.6,X6:180,X7:48,X8:142,X9:38,X10:2.63,X11:9.4,X12:120,X13:62,X14:1850,X15:95,
+X16:1240,X17:980,X18:710,X19:460,X20:9650,X21:7.78,X22:42,X23:56,X24:21,X25:14,X26:38,X27:22.5,X28:17,X29:3.1,X30:215,X31:34,X32:19,X33:27,X34:18,X35:12,X36:5,X37:310,
+X38:1520,X39:1468,X40:96.6,X41:94.2,X42:1120,X43:82.4,X44:7.2,X45:8.6,X46:245,X47:16.7,X48:58,X49:34,X50:89,X51:310,X52:9,
+X53:2740,X54:40,X55:148,X56:35.9,X57:1890,X58:27.6,X59:62,X60:5,X61:980,X62:1340,X63:74,X64:4.8,X65:100,X66:12,X67:0.71,
+X68:68,X69:71,X70:69.5,X71:8,X72:6,X73:27,X74:19,X75:11,X76:14,X77:95,X78:42,X79:35};
+const SAMPLE = Object.fromEntries(Object.entries(SAMPLE_RAW).filter(([k])=>!IS_DER(k)));
+
+/* ================= state ================= */
+const S = {
+  name:"", cat:"overall", goal:"b100", targetYear:new Date().getFullYear()+5, baseYear:new Date().getFullYear(),
+  peer:1, sizeNorm:1, vals:{}, filled:{}, push:{TLR:1,RP:1,GO:1,OI:1,PR:1},
+  bands:Object.fromEntries(BANDS.map(b=>[b.k,b.t])), scenarios:[]
+};
+const KEY="nirf-console-v2";
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+function load(){ try{ const r=localStorage.getItem(KEY); if(r){ Object.assign(S,JSON.parse(r)); } }catch(e){} }
+
+/* ================= engine ================= */
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+function bounds(ind,students){
+  let mn=ind.min, mx=ind.max;
+  if(ind.perK && S.sizeNorm==1){ const k=Math.max(0.5,(students||1000)/1000); mn*=k; mx*=k; }
+  if(!ind.inv && S.peer<1){ mx = mn + (mx-mn)*S.peer; }
+  if(ind.inv && S.peer<1){ mn = mx - (mx-mn)*S.peer; }
+  return [mn,mx];
+}
+function norm(ind,raw,students){
+  if(!raw) return 0;                       // no data is no score, inverted included
+  const [mn,mx]=bounds(ind,students);
+  if(mx===mn) return 0;
+  const v = ind.inv ? (mx-raw)/(mx-mn) : (raw-mn)/(mx-mn);
+  return clamp(v,0,1)*100;
+}
+function paramScores(raw){
+  const vals=withDerived(raw), st=vals.X1||0, out={};
+  for(const p of PKEYS){
+    let s=0;
+    for(const ind of IND) if(ind.p===p) s += (ind.w/100)*norm(ind, vals[ind.id]||0, st);
+    out[p]=s;
+  }
+  return out;
+}
+function composite(raw){
+  const ps=paramScores(raw), w=CATEGORIES[S.cat].w;
+  return PKEYS.reduce((a,p)=>a+w[p]*ps[p],0);
+}
+function threshold(){ return S.bands[S.goal]; }
+
+/* One planning year. Movement is set in normalised points per year, braked as
+   the indicator approaches the peer ceiling, then converted back to raw units. */
+function step(vals, push, year){
+  const nv={...vals}, st=vals.X1||0;
+  for(const ind of IND){
+    if(ind.pace<=0) continue;            // derived — follows its components
+    if(year<=ind.lag) continue;          // lagged — nothing registers yet
+    const [mn,mx]=bounds(ind,st);
+    const n = norm(ind, vals[ind.id]||0, st);
+    const delta = Math.min(ind.pace*PACE_K*(push[ind.p]||0), (100-n)*0.35);
+    const n2 = clamp(n+delta, 0, 100);
+    nv[ind.id] = ind.inv ? mx-(n2/100)*(mx-mn) : mn+(n2/100)*(mx-mn);
+  }
+  return withDerived(nv);
+}
+function simulate(push, years=20){
+  let v=withDerived(S.vals);
+  const path=[{y:0, vals:{...v}, score:composite(v)}];
+  for(let y=1;y<=years;y++){
+    v=step(v,push,y);
+    path.push({y, vals:{...v}, score:composite(v)});
+  }
+  return path;
+}
+function arrivalYear(push,years=20){
+  const p=simulate(push,years), t=threshold();
+  for(const s of p) if(s.score>=t) return s.y;
+  return null;
+}
+function scaledPush(f){ const o={}; for(const p of PKEYS) o[p]=S.push[p]*f; return o; }
+function requiredFactor(){
+  const T = S.targetYear - S.baseYear;
+  if(T<=0) return null;
+  const lo0=0.05, hi0=6;
+  if(simulate(scaledPush(hi0),T)[T].score < threshold()) return Infinity;
+  if(simulate(scaledPush(lo0),T)[T].score >= threshold()) return lo0;
+  let lo=lo0, hi=hi0;
+  for(let i=0;i<36;i++){ const m=(lo+hi)/2; if(simulate(scaledPush(m),T)[T].score>=threshold()) hi=m; else lo=m; }
+  return hi;
+}
+function priorities(){
+  const vals=withDerived(S.vals), st=vals.X1||0, w=CATEGORIES[S.cat].w;
+  return IND.map(ind=>{
+    const cur=norm(ind,vals[ind.id]||0,st);
+    const gap=(100-cur)/100;
+    return {ind, cur, gap, pri: gap*(ind.w/100)*w[ind.p]*100, lev: gap*(ind.w/100)*w[ind.p]*100/ind.eff};
+  });
+}
+
+/* ================= formatting ================= */
+function fmt(n,dp){
+  if(n===undefined||n===null||isNaN(n)) return "—";
+  if(dp===undefined) dp = Math.abs(n)>=100?0:(Math.abs(n)>=10?1:2);
+  return Number(n).toLocaleString("en-IN",{minimumFractionDigits:dp,maximumFractionDigits:dp});
+}
+function bandOf(sc){
+  let nm="Below the ranked bands";
+  for(const b of BANDS) if(sc>=S.bands[b.k]) nm=b.nm;
+  return nm;
+}
+function yearLabel(y){ return S.baseYear + y; }
+
+/* ================= rendering ================= */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+function el(tag,attrs,html){ const e=document.createElement(tag); if(attrs) for(const k in attrs) e.setAttribute(k,attrs[k]); if(html!==undefined) e.innerHTML=html; return e; }
+
+function renderAll(){ renderReadout(); renderSetup(); renderData(); renderGaps(); renderPlan(); renderLab(); save(); }
+
+/* ---- readout + ruler ---- */
+function renderReadout(){
+  const sc=composite(S.vals);
+  $("#bigScore").textContent = fmt(sc,1);
+  const T=S.targetYear-S.baseYear;
+  const proj = T>0 ? simulate(S.push,Math.max(T,1))[T].score : sc;
+  const arrive = arrivalYear(S.push);
+  const need = requiredFactor();
+  const v=$("#verdict"); v.innerHTML="";
+  v.appendChild(el("span",{class:"pill plain"}, bandOf(sc)+" today"));
+  const g=BANDS.find(b=>b.k===S.goal).nm;
+  if(arrive===null){
+    v.appendChild(el("span",{class:"pill bad"}, g+" not reachable within 20 years at this push"));
+  } else {
+    const ok = yearLabel(arrive) <= S.targetYear;
+    v.appendChild(el("span",{class:ok?"pill ok":"pill warn"},
+      g+" reached in "+yearLabel(arrive)+" ("+arrive+" yr) at current push"));
+  }
+  if(T>0){
+    if(need===Infinity) v.appendChild(el("span",{class:"pill bad"},"Target year "+S.targetYear+" is not achievable"));
+    else if(need>2.0) v.appendChild(el("span",{class:"pill bad"},"Needs "+fmt(need,1)+"× current push — beyond plausible"));
+    else if(need>1.0) v.appendChild(el("span",{class:"pill warn"},"Needs "+fmt(need,1)+"× current push to hit "+S.targetYear));
+    else v.appendChild(el("span",{class:"pill ok"},"On track for "+S.targetYear));
+  }
+  drawRuler(sc, proj);
+}
+function drawRuler(now, proj){
+  const W=900,H=92, L=54,R=W-24, y=56;
+  const x=v=>L+(R-L)*clamp(v,0,100)/100;
+  let s=`<g font-family="IBM Plex Sans, sans-serif">`;
+  s+=`<line x1="${L}" y1="${y}" x2="${R}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`;
+  // band segments
+  const segs=[{a:0,b:S.bands.b200,l:"unranked"},{a:S.bands.b200,b:S.bands.b100,l:"101–200"},
+    {a:S.bands.b100,b:S.bands.b50,l:"top 100"},{a:S.bands.b50,b:S.bands.b25,l:"top 50"},
+    {a:S.bands.b25,b:S.bands.b10,l:"top 25"},{a:S.bands.b10,b:100,l:"top 10"}];
+  segs.forEach((sg,i)=>{
+    const op=0.10+i*0.12;
+    s+=`<rect x="${x(sg.a)}" y="${y-9}" width="${Math.max(0,x(sg.b)-x(sg.a))}" height="18" fill="var(--seal)" opacity="${op}"/>`;
+    const mid=(x(sg.a)+x(sg.b))/2;
+    if(x(sg.b)-x(sg.a)>52) s+=`<text x="${mid}" y="${y+26}" font-size="11" fill="var(--muted)" text-anchor="middle">${sg.l}</text>`;
+    s+=`<line x1="${x(sg.b)}" y1="${y-11}" x2="${x(sg.b)}" y2="${y+11}" stroke="var(--line)"/>`;
+    if(sg.b<100) s+=`<text x="${x(sg.b)}" y="${y+40}" font-size="10" fill="var(--muted)" text-anchor="middle">${sg.b}</text>`;
+  });
+  // target threshold
+  const t=threshold();
+  s+=`<line x1="${x(t)}" y1="${y-22}" x2="${x(t)}" y2="${y+14}" stroke="var(--ochre)" stroke-width="2"/>`;
+  s+=`<text x="${x(t)}" y="${y-27}" font-size="11" fill="var(--ochre)" text-anchor="middle">target ${BANDS.find(b=>b.k===S.goal).nm.toLowerCase()}</text>`;
+  // journey span
+  if(proj>now) s+=`<rect x="${x(now)}" y="${y-3}" width="${x(proj)-x(now)}" height="6" fill="var(--seal)" opacity="0.35"/>`;
+  // projected marker
+  if(proj>now+0.2){
+    s+=`<circle cx="${x(proj)}" cy="${y}" r="6" fill="var(--panel)" stroke="var(--seal)" stroke-width="2"/>`;
+    s+=`<text x="${x(proj)}" y="${y+58}" font-size="11.5" fill="var(--seal)" text-anchor="middle">${fmt(proj,1)} in ${S.targetYear}</text>`;
+  }
+  // now marker
+  s+=`<path d="M ${x(now)} ${y-8} l 7 -12 l -14 0 z" fill="var(--ink)"/>`;
+  s+=`<line x1="${x(now)}" y1="${y-8}" x2="${x(now)}" y2="${y+8}" stroke="var(--ink)" stroke-width="2"/>`;
+  s+=`<text x="${L-8}" y="${y+4}" font-size="11" fill="var(--muted)" text-anchor="end">score</text>`;
+  s+=`</g>`;
+  $("#ruler").innerHTML=s;
+}
+
+/* ---- setup ---- */
+function renderSetup(){
+  const cs=$("#category");
+  if(!cs.options.length){
+    for(const k in CATEGORIES) cs.appendChild(el("option",{value:k},CATEGORIES[k].nm));
+    const gs=$("#goal");
+    for(const b of BANDS) gs.appendChild(el("option",{value:b.k},b.nm));
+  }
+  cs.value=S.cat; $("#goal").value=S.goal; $("#instName").value=S.name;
+  $("#targetYear").value=S.targetYear; $("#baseYear").value=S.baseYear;
+  $("#peerBand").value=S.peer; $("#sizeNorm").value=S.sizeNorm;
+  const w=CATEGORIES[S.cat].w;
+  $("#catWeights").textContent="Weights: "+PKEYS.map(p=>p+" "+Math.round(w[p]*100)+"%").join(" · ");
+  $("#goalHelp").textContent="Composite score needed: "+S.bands[S.goal];
+
+  $("#bandEditor").innerHTML = "<strong>Band thresholds.</strong> These map this model's composite score onto NIRF rank bands. They are indicative — replace them with values calibrated against published scores in your category."+
+    "<div class='row' style='margin-top:10px'>"+BANDS.map(b=>
+      `<label style="font-size:12.5px;color:var(--muted)">${b.nm}<br><input type="number" data-band="${b.k}" value="${S.bands[b.k]}" style="width:78px;margin-top:3px"></label>`).join("")+"</div>";
+  $$("#bandEditor input").forEach(i=>i.oninput=()=>{ S.bands[i.dataset.band]=+i.value||0; renderAll(); });
+
+  // completeness
+  const ENT=IND.filter(i=>!i.der);
+  const tot=ENT.length, f=ENT.filter(i=>S.filled[i.id]).length;
+  const byP=PKEYS.map(p=>{ const a=ENT.filter(i=>i.p===p); return {p, f:a.filter(i=>S.filled[i.id]).length, t:a.length}; });
+  $("#completeness").innerHTML =
+    `<div style="font-size:15px;margin-bottom:12px">${f} of ${tot} indicators evidenced — <strong>${Math.round(100*f/tot)}%</strong> data readiness</div>`+
+    byP.map(b=>`<div class="pbar"><div class="nm">${b.p}</div><div class="track"><div class="fill" style="width:${100*b.f/b.t}%;background:${b.f===b.t?'var(--seal)':'var(--ochre)'}"></div></div><div class="val">${b.f}/${b.t}</div></div>`).join("")+
+    (f<tot?`<p class="help" style="margin-top:8px">Unevidenced indicators are scored as zero. If a number exists but is not entered here, the model is understating you.</p>`:"");
+}
+
+/* ---- data form ---- */
+function renderData(){
+  const host=$("#dataForm");
+  if(host.dataset.built!=="1"){
+    host.innerHTML="";
+    for(const p of PKEYS){
+      const head=el("div",{class:"indhead"},`<h3>${p} — ${PARAM_NAMES[p]}</h3><div class="sc" data-sc="${p}"></div>`);
+      host.appendChild(head);
+      for(const ind of IND.filter(i=>i.p===p)){
+        const row=el("div",{class:"ind"});
+        row.innerHTML=`<div class="nm">${ind.nm}<em>${ind.id} · weight ${ind.w}% · ${ind.u}${ind.inv?" · lower is better":""}${ind.der?" · computed from "+ind.der:""}</em></div>`;
+        const cell=el("div");
+        if(ind.der){
+          cell.innerHTML=`<div style="padding:5px 0;font-size:13.5px;color:var(--muted)" data-der="${ind.id}">—</div>`;
+        } else if(ind.sel==="accred"){
+          const sel=el("select",{ "data-id":ind.id });
+          ACCRED.forEach(([n,v])=>sel.appendChild(el("option",{value:v},n)));
+          cell.appendChild(sel);
+        } else {
+          cell.appendChild(el("input",{type:"number",step:"any",min:"0","data-id":ind.id,placeholder:"—"}));
+        }
+        row.appendChild(cell);
+        row.appendChild(el("div",{class:"meter"},`<div class="mini"><i data-bar="${ind.id}" style="width:0%"></i></div><span class="pct" data-pct="${ind.id}">—</span>`));
+        host.appendChild(row);
+      }
+    }
+    host.dataset.built="1";
+    $$("#dataForm [data-id]").forEach(inp=>{
+      inp.addEventListener("input",()=>{
+        const id=inp.dataset.id;
+        if(inp.value===""){ delete S.vals[id]; S.filled[id]=false; }
+        else { S.vals[id]=+inp.value; S.filled[id]=true; }
+        renderReadout(); refreshMeters(); renderGaps(); renderPlan(); renderSetup(); save();
+      });
+    });
+  }
+  $$("#dataForm [data-id]").forEach(inp=>{
+    const id=inp.dataset.id;
+    const v=S.vals[id];
+    if(inp.tagName==="SELECT"){ inp.value = v!==undefined ? v : 0; }
+    else inp.value = v!==undefined ? v : "";
+  });
+  refreshMeters();
+}
+function refreshMeters(){
+  const dv=withDerived(S.vals), st=dv.X1||0;
+  for(const ind of IND){
+    const n=norm(ind,dv[ind.id]||0,st);
+    const de=$(`[data-der="${ind.id}"]`);
+    if(de) de.textContent = dv[ind.id] ? fmt(dv[ind.id]) : "—";
+    const bar=$(`[data-bar="${ind.id}"]`), pct=$(`[data-pct="${ind.id}"]`);
+    if(bar){ bar.style.width=n+"%"; bar.style.background = n>=70?"var(--seal)":(n>=35?"var(--ochre)":"var(--clay)"); }
+    const has = ind.der ? !!dv[ind.id] : S.filled[ind.id];
+    if(pct) pct.textContent = has ? fmt(n,0)+"/100" : "no data";
+  }
+  const ps=paramScores(S.vals);
+  PKEYS.forEach(p=>{ const e=$(`[data-sc="${p}"]`); if(e) e.textContent = "score "+fmt(ps[p],1)+" / 100"; });
+}
+
+/* ---- gaps ---- */
+function renderGaps(){
+  const ps=paramScores(S.vals), w=CATEGORIES[S.cat].w, t=threshold(), sc=composite(S.vals);
+  // required parameter level: proportional lift to reach threshold
+  const lift = t - sc;
+  $("#paramBars").innerHTML = PKEYS.map(p=>{
+    const need = clamp(ps[p] + lift*(1 - ps[p]/100)*1.6, 0, 100);
+    return `<div class="pbar"><div class="nm">${p}</div>
+      <div class="track"><div class="fill" style="width:${ps[p]}%"></div>${lift>0?`<div class="tgt" style="left:${need}%"></div>`:""}</div>
+      <div class="val">${fmt(ps[p],1)}${lift>0?" → "+fmt(need,0):""} · w ${Math.round(w[p]*100)}%</div></div>`;
+  }).join("");
+
+  const rows = PKEYS.map(p=>{
+    const need = clamp(ps[p] + lift*(1-ps[p]/100)*1.6,0,100);
+    const gap = need>ps[p] ? (need-ps[p])/need*100 : 0;
+    return {p, cur:ps[p], need, gap, pri: gap*w[p]*100/10};
+  }).sort((a,b)=>b.pri-a.pri);
+  $("#gapTable").innerHTML =
+    `<thead><tr><th>Parameter</th><th class="n">Weight</th><th class="n">Current</th><th class="n">Needed</th><th class="n">Gap</th><th class="n">Priority</th></tr></thead><tbody>`+
+    rows.map(r=>`<tr><td>${r.p} — ${PARAM_NAMES[r.p]}</td><td class="n">${Math.round(w[r.p]*100)}%</td>
+      <td class="n">${fmt(r.cur,1)}</td><td class="n">${fmt(r.need,1)}</td>
+      <td class="n" style="color:${r.gap>25?'var(--clay)':r.gap>10?'var(--ochre)':'var(--seal)'}">${fmt(r.gap,1)}%</td>
+      <td class="n">${fmt(r.pri,2)}</td></tr>`).join("")+`</tbody>`;
+
+  const lev = priorities().filter(r=>!r.ind.der).sort((a,b)=>b.lev-a.lev).slice(0,16);
+  const st=withDerived(S.vals).X1||0;
+  $("#leverTable").innerHTML =
+    `<thead><tr><th>Move</th><th class="n">Now</th><th class="n">Peer ceiling</th><th class="n">Score</th><th class="n">Effort</th></tr></thead><tbody>`+
+    lev.map(r=>{
+      const [mn,mx]=bounds(r.ind,st);
+      const ceil = r.ind.inv?mn:mx;
+      return `<tr><td><strong>${r.ind.nm}</strong> <span style="color:var(--muted)">${r.ind.id}</span><br>
+        <span style="color:var(--ink-2);font-size:12.5px">${r.ind.act}</span></td>
+        <td class="n">${S.filled[r.ind.id]?fmt(S.vals[r.ind.id]):"—"}</td>
+        <td class="n">${fmt(ceil)}</td>
+        <td class="n">${fmt(r.cur,0)}</td>
+        <td class="n">${["","low","medium","high"][r.ind.eff]}</td></tr>`;
+    }).join("")+`</tbody>`;
+}
+
+/* ---- plan ---- */
+function renderPlan(){
+  const t=threshold(), T=S.targetYear-S.baseYear;
+  const base=simulate({TLR:1,RP:1,GO:1,OI:1,PR:1},20);
+  const plan=simulate(S.push,20);
+  const need=requiredFactor();
+  const planPush = (need && need!==Infinity && need>1) ? scaledPush(need) : S.push;
+  const target=simulate(planPush,20);
+  const arrive=arrivalYear(S.push);
+
+  $("#trajLede").textContent = `Composite score projected forward from ${S.baseYear}. The solid line is your current push; the dotted line is the push required to hit ${S.targetYear}.`;
+  drawTraj(plan, target, t, T);
+
+  const vd=$("#trajVerdict");
+  let html="";
+  if(need===Infinity){
+    html=`<div class="note" style="border-left-color:var(--clay)"><strong>${S.targetYear} is not reachable.</strong> Even at maximum plausible effort across all five parameters, the composite does not clear ${t} by then. The binding constraints are the lagged indicators — citations, h-index, doctoral graduates and perception cannot be bought forward. `+
+      (arrive!==null?`The earliest credible year at your current push is <strong>${yearLabel(arrive)}</strong>.`:`No arrival year within 20 years at the current push.`)+`</div>`;
+  } else if(need>2.0){
+    html=`<div class="note" style="border-left-color:var(--clay)"><strong>${S.targetYear} would need roughly ${fmt(need,1)}× your current effort.</strong> That is outside what an institution normally sustains. Either move the target year out, or lower the target band and treat the higher band as a second phase.</div>`;
+  } else if(need>1.0){
+    html=`<div class="note" style="border-left-color:var(--ochre)"><strong>${S.targetYear} is reachable but tight.</strong> It needs about ${fmt(need,1)}× your current push, concentrated where the leverage table says. The roadmap below is built at that intensity.</div>`;
+  } else {
+    html=`<div class="note"><strong>On track.</strong> At the current push the composite clears ${t} in ${arrive!==null?yearLabel(arrive):"—"}, ${arrive!==null && yearLabel(arrive)<S.targetYear?"ahead of":"at"} your target year. Consider raising the target band.</div>`;
+  }
+  vd.innerHTML=html;
+  buildRoadmap(target, Math.min(T>0?T:5, 12));
+}
+function drawTraj(plan, target, t, T){
+  const W=900,H=220,L=48,R=W-16,TOP=16,BOT=H-30;
+  const yrs=12;
+  const x=y=>L+(R-L)*y/yrs;
+  const py=v=>BOT-(BOT-TOP)*clamp(v,0,100)/100;
+  let s=`<g font-family="IBM Plex Sans, sans-serif">`;
+  for(let g=0;g<=100;g+=25){
+    s+=`<line x1="${L}" y1="${py(g)}" x2="${R}" y2="${py(g)}" stroke="var(--line-2)"/>`;
+    s+=`<text x="${L-8}" y="${py(g)+4}" font-size="10" fill="var(--muted)" text-anchor="end">${g}</text>`;
+  }
+  s+=`<line x1="${L}" y1="${py(t)}" x2="${R}" y2="${py(t)}" stroke="var(--ochre)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  s+=`<text x="${R}" y="${py(t)-6}" font-size="11" fill="var(--ochre)" text-anchor="end">target ${t}</text>`;
+  if(T>0&&T<=yrs){
+    s+=`<line x1="${x(T)}" y1="${TOP}" x2="${x(T)}" y2="${BOT}" stroke="var(--line)" stroke-dasharray="3 3"/>`;
+    s+=`<text x="${x(T)}" y="${TOP-3}" font-size="11" fill="var(--muted)" text-anchor="middle">${S.targetYear}</text>`;
+  }
+  for(let y=0;y<=yrs;y+=2) s+=`<text x="${x(y)}" y="${BOT+16}" font-size="10" fill="var(--muted)" text-anchor="middle">${yearLabel(y)}</text>`;
+  const line=(arr,col,dash)=>{
+    const d=arr.slice(0,yrs+1).map((p,i)=>(i?"L":"M")+x(p.y)+" "+py(p.score)).join(" ");
+    return `<path d="${d}" fill="none" stroke="${col}" stroke-width="2" ${dash?`stroke-dasharray="${dash}"`:""}/>`;
+  };
+  s+=line(target,"var(--ochre)","4 4");
+  s+=line(plan,"var(--seal)");
+  const last=plan[0];
+  s+=`<circle cx="${x(0)}" cy="${py(last.score)}" r="4" fill="var(--seal)"/>`;
+  s+=`<text x="${L+6}" y="${py(last.score)-9}" font-size="11" fill="var(--seal)">${fmt(last.score,1)} today</text>`;
+  s+=`</g>`;
+  $("#traj").innerHTML=s;
+}
+function buildRoadmap(path, horizon){
+  const w=CATEGORIES[S.cat].w, host=$("#roadmap");
+  let html=`<div class="yearblk"><h4>${S.baseYear} — foundation <span class="chk">before any score moves</span></h4>
+    <ul>
+      <li><span>Appoint a NIRF nodal officer with authority over departmental data returns</span><span class="mv">governance</span></li>
+      <li><span>Reconcile student, faculty and financial counts to a single institutional source</span><span class="mv">data</span></li>
+      <li><span>Consolidate Scopus and Web of Science records under one institution identifier</span><span class="mv">data</span></li>
+      <li><span>Evidence the ${IND.filter(i=>!i.der && !S.filled[i.id]).length} indicators currently carrying no data</span><span class="mv">data</span></li>
+    </ul></div>`;
+  for(let y=1;y<=horizon;y++){
+    const prev=path[y-1].vals, cur=path[y].vals, st=prev.X1||0;
+    const moves=IND.filter(i=>!i.der).map(ind=>{
+      const a=norm(ind,prev[ind.id]||0,st), b=norm(ind,cur[ind.id]||0,cur.X1||st);
+      return {ind, gain:(b-a)*(ind.w/100)*w[ind.p], from:prev[ind.id]||0, to:cur[ind.id]||0};
+    }).filter(m=>m.gain>0.012).sort((a,b)=>b.gain-a.gain).slice(0,6);
+    const sc=path[y].score;
+    html+=`<div class="yearblk future"><h4>${yearLabel(y)} <span class="chk">checkpoint score ${fmt(sc,1)} · ${bandOf(sc).toLowerCase()}</span></h4>`;
+    html+= moves.length? "<ul>"+moves.map(m=>
+      `<li><span><strong>${m.ind.nm}</strong> ${fmt(m.from)} → ${fmt(m.to)} ${m.ind.u}<br><span style="color:var(--muted);font-size:12.5px">${m.ind.act}</span></span><span class="mv">+${fmt(m.gain,2)} pts</span></li>`
+      ).join("")+"</ul>" : `<p class="help">No material movement available this year — lagged indicators are still maturing.</p>`;
+    html+=`</div>`;
+  }
+  host.innerHTML=html;
+}
+
+/* ---- lab ---- */
+const PUSH_LABELS=[[0,"Hold"],[0.5,"Light"],[1,"Steady"],[1.6,"Focused"],[2.2,"Aggressive"]];
+function pushLabel(v){ let best=PUSH_LABELS[0]; for(const p of PUSH_LABELS) if(v>=p[0]) best=p; return best[1]; }
+function renderLab(){
+  const host=$("#sliders");
+  if(host.dataset.built!=="1"){
+    host.innerHTML=PKEYS.map(p=>
+      `<div class="slider"><div class="nm" style="font-weight:600">${p}</div>
+       <input type="range" min="0" max="2.4" step="0.1" data-push="${p}">
+       <div class="val" style="font-size:13px;color:var(--muted);text-align:right" data-pl="${p}"></div></div>`).join("");
+    host.dataset.built="1";
+    $$("[data-push]").forEach(r=>r.addEventListener("input",()=>{
+      S.push[r.dataset.push]=+r.value; renderReadout(); renderPlan(); renderLab(); save();
+    }));
+  }
+  PKEYS.forEach(p=>{ $(`[data-push="${p}"]`).value=S.push[p]; $(`[data-pl="${p}"]`).textContent=pushLabel(S.push[p])+" ("+fmt(S.push[p],1)+"×)"; });
+
+  const arrive=arrivalYear(S.push), t=threshold();
+  const T=S.targetYear-S.baseYear;
+  const at=T>0?simulate(S.push,T)[T].score:composite(S.vals);
+  $("#labOut").innerHTML=`<hr class="rule"><div class="grid2">
+    <div><div style="font-size:12.5px;color:var(--muted)">Arrival at ${BANDS.find(b=>b.k===S.goal).nm}</div>
+      <div class="display" style="font-size:28px">${arrive===null?"beyond 20 years":yearLabel(arrive)}</div></div>
+    <div><div style="font-size:12.5px;color:var(--muted)">Score in ${S.targetYear}</div>
+      <div class="display" style="font-size:28px;color:${at>=t?'var(--seal)':'var(--clay)'}">${fmt(at,1)}</div></div>
+    <div><div style="font-size:12.5px;color:var(--muted)">Needed</div>
+      <div class="display" style="font-size:28px">${t}</div></div>
+  </div>`;
+  renderScenarios();
+}
+function renderScenarios(){
+  const tb=$("#scTable");
+  if(!S.scenarios.length){ tb.innerHTML=`<tbody><tr><td style="color:var(--muted)">No scenarios saved. Set the sliders and save one to compare.</td></tr></tbody>`; return; }
+  tb.innerHTML=`<thead><tr><th>Scenario</th><th>Push</th><th class="n">Arrival</th><th class="n">Score in ${S.targetYear}</th><th></th></tr></thead><tbody>`+
+    S.scenarios.map((s,i)=>{
+      const T=S.targetYear-S.baseYear;
+      const a=arrivalYearFor(s.push), sc=T>0?simulate(s.push,T)[T].score:0;
+      return `<tr><td><strong>${s.nm}</strong></td>
+        <td style="color:var(--muted);font-size:12.5px">${PKEYS.map(p=>p+" "+fmt(s.push[p],1)).join(" · ")}</td>
+        <td class="n">${a===null?"—":yearLabel(a)}</td><td class="n">${fmt(sc,1)}</td>
+        <td class="n"><button class="tinybtn" data-apply="${i}">Apply</button> <button class="tinybtn" data-del="${i}">Delete</button></td></tr>`;
+    }).join("")+`</tbody>`;
+  $$("[data-apply]").forEach(b=>b.onclick=()=>{ S.push={...S.scenarios[+b.dataset.apply].push}; renderAll(); });
+  $$("[data-del]").forEach(b=>b.onclick=()=>{ S.scenarios.splice(+b.dataset.del,1); renderAll(); });
+}
+function arrivalYearFor(push){ const p=simulate(push,20),t=threshold(); for(const s of p) if(s.score>=t) return s.y; return null; }
+
+/* ---- method table ---- */
+function renderEngine(){
+  $("#engineTable").innerHTML=`<thead><tr><th>ID</th><th>Indicator</th><th class="n">Weight</th><th class="n">Floor</th><th class="n">Ceiling</th><th class="n">Annual movement</th><th class="n">Lag</th></tr></thead><tbody>`+
+    IND.map(i=>`<tr><td>${i.id}</td><td>${i.nm}${i.perK?' <span style="color:var(--muted)">per 1k students</span>':""}</td>
+      <td class="n">${i.w}%</td><td class="n">${i.min}</td><td class="n">${i.max}</td>
+      <td class="n">${i.der?"derived":fmt(i.pace*PACE_K,1)+" pts"}</td><td class="n">${i.lag} yr</td></tr>`).join("")+`</tbody>`;
+}
+
+/* ================= wiring ================= */
+$("#rail").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-v]"); if(!b) return;
+  $$("#rail button").forEach(x=>x.setAttribute("aria-current", x===b?"true":"false"));
+  $$(".view").forEach(v=>v.hidden = v.dataset.view!==b.dataset.v);
+  window.scrollTo({top:0,behavior:"instant"});
+});
+["instName","category","goal","targetYear","baseYear","peerBand","sizeNorm"].forEach(id=>{
+  $("#"+id).addEventListener("input",()=>{
+    S.name=$("#instName").value; S.cat=$("#category").value; S.goal=$("#goal").value;
+    S.targetYear=+$("#targetYear").value||S.targetYear; S.baseYear=+$("#baseYear").value||S.baseYear;
+    S.peer=+$("#peerBand").value; S.sizeNorm=+$("#sizeNorm").value;
+    renderAll();
+  });
+});
+$("#loadSample").onclick=()=>{ S.vals={...SAMPLE}; S.filled=Object.fromEntries(Object.keys(SAMPLE).map(k=>[k,true])); S.name=S.name||"Sample multidisciplinary university"; renderAll(); };
+$("#clearAll").onclick=()=>{ S.vals={}; S.filled={}; renderAll(); };
+$("#themeBtn").onclick=()=>{
+  const cur=document.documentElement.getAttribute("data-theme");
+  const next = cur==="dark" ? "light" : (cur==="light" ? "dark" : (matchMedia("(prefers-color-scheme: dark)").matches?"light":"dark"));
+  document.documentElement.setAttribute("data-theme",next);
+  try{ localStorage.setItem(KEY+":theme",next); }catch(e){}
+  renderReadout(); renderPlan();
+};
+$$("[data-preset]").forEach(b=>b.onclick=()=>{
+  const p=b.dataset.preset;
+  const M={hold:{TLR:.4,RP:.4,GO:.4,OI:.4,PR:.4},balanced:{TLR:1.2,RP:1.2,GO:1.2,OI:1.2,PR:1},
+    research:{TLR:1,RP:2.2,GO:.8,OI:.6,PR:1.2},outcomes:{TLR:1.2,RP:.8,GO:2.2,OI:1.4,PR:1},
+    max:{TLR:2.2,RP:2.2,GO:2.2,OI:2.2,PR:2.2}};
+  S.push={...M[p]}; renderAll();
+});
+$("#saveSc").onclick=()=>{
+  const nm=$("#scName").value.trim()||("Scenario "+(S.scenarios.length+1));
+  S.scenarios.push({nm, push:{...S.push}}); $("#scName").value=""; renderAll();
+};
+$("#copyPlan").onclick=async()=>{
+  const t=threshold(), arrive=arrivalYear(S.push);
+  let txt=`NIRF readiness plan — ${S.name||"Institution"}\n`;
+  txt+=`Category ${CATEGORIES[S.cat].nm} · base ${S.baseYear} · target ${BANDS.find(b=>b.k===S.goal).nm} by ${S.targetYear}\n`;
+  txt+=`Composite today ${fmt(composite(S.vals),1)} / needed ${t} · arrival at current push: ${arrive===null?"beyond 20 years":yearLabel(arrive)}\n\n`;
+  const ps=paramScores(S.vals);
+  txt+=PKEYS.map(p=>`${p} ${fmt(ps[p],1)}`).join("   ")+"\n\n";
+  txt+=$("#roadmap").innerText;
+  try{ await navigator.clipboard.writeText(txt); $("#copyPlan").textContent="Copied"; setTimeout(()=>$("#copyPlan").textContent="Copy plan as text",1600); }
+  catch(e){ $("#copyPlan").textContent="Copy blocked by browser"; }
+};
+
+/* ================= boot ================= */
+try{ const th=localStorage.getItem(KEY+":theme"); if(th) document.documentElement.setAttribute("data-theme",th); }catch(e){}
+load();
+renderEngine();
+renderAll();
+</script>
+</body>
+</html>

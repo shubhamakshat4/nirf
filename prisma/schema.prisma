@@ -1,0 +1,106 @@
+// NIRF Readiness Portal — data model.
+//
+// SQLite for development. To move to Postgres, change `provider` to
+// "postgresql" and point DATABASE_URL at the server; every query lives behind
+// lib/db/*.ts so nothing else changes. Status fields are strings validated at
+// the application boundary (Zod + lib/db/types.ts) rather than DB enums, so the
+// schema is identical across providers.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Institution {
+  id         String   @id @default(cuid())
+  name       String
+  category   String   @default("overall") // CategoryKey
+  baseYear   Int
+  targetYear Int
+  targetBand String   @default("b100") // BandKey
+  peerBand   Float    @default(1) // 1 | 0.8 | 0.62
+  sizeNorm   Boolean  @default(true)
+  bands      Json // Record<BandKey, number>
+  createdAt  DateTime @default(now())
+
+  users  User[]
+  cycles Cycle[]
+}
+
+model User {
+  id            String @id @default(cuid())
+  email         String @unique
+  name          String
+  passwordHash  String
+  role          String // CONTRIBUTOR | IQAC | LEADERSHIP
+  institutionId String
+  ownedParams   String @default("") // csv of TLR,RP,GO,OI,PR
+
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  entries     Entry[]     @relation("EntryUpdatedBy")
+  logs        EntryLog[]
+  scenarios   Scenario[]
+}
+
+model Cycle {
+  id            String    @id @default(cuid())
+  institutionId String
+  year          Int
+  status        String    @default("DRAFT") // DRAFT | IN_REVIEW | LOCKED
+  lockedAt      DateTime?
+  createdAt     DateTime  @default(now())
+
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  entries     Entry[]
+  scenarios   Scenario[]
+
+  @@unique([institutionId, year])
+}
+
+model Entry {
+  id          String   @id @default(cuid())
+  cycleId     String
+  indicatorId String // IndicatorId, enterable ones only — derived values are never stored
+  value       Float?
+  note        String?
+  evidenceUrl String?
+  status      String   @default("EMPTY") // EMPTY | DRAFT | SUBMITTED | VERIFIED | REJECTED
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+
+  cycle     Cycle      @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  updatedBy User?      @relation("EntryUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  logs      EntryLog[]
+
+  @@unique([cycleId, indicatorId])
+}
+
+model EntryLog {
+  id       String   @id @default(cuid())
+  entryId  String
+  oldValue Float?
+  newValue Float?
+  userId   String
+  at       DateTime @default(now())
+
+  entry Entry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([entryId])
+}
+
+model Scenario {
+  id          String   @id @default(cuid())
+  cycleId     String
+  name        String
+  push        Json // Record<Param, number>
+  createdById String
+  createdAt   DateTime @default(now())
+
+  cycle     Cycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  createdBy User  @relation(fields: [createdById], references: [id], onDelete: Cascade)
+}
