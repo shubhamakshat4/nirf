@@ -4,7 +4,7 @@
    Usage: node scripts/smoke.mjs [baseUrl] */
 
 const BASE = process.argv[2] ?? "http://localhost:3000";
-const PASSWORD = "nirf1234";
+const PASSWORD = process.env.SMOKE_PASSWORD ?? "nirf1234";
 
 class Jar {
   constructor() {

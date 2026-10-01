@@ -114,32 +114,36 @@ reads `DATABASE_URL` and rewrites the Prisma provider to match, and both
 application code differs between the two providers.
 
 **1. Create a free Postgres database.** Sign up at [neon.com](https://neon.com)
-(free tier, no card) and create a project. From the dashboard, copy both
-connection strings — the **pooled** one (host contains `-pooler`) and the
-**direct** one. Supabase and Vercel Postgres work the same way.
+(free tier, no card), create a project and copy the connection string it gives
+you. Neon's default pooled string (host contains `-pooler`) is fine for both
+steps below — it handles the schema push and Prisma's interactive transactions.
+Supabase and Vercel Postgres work the same way.
 
-**2. Create the schema and seed it,** from your machine, using the **direct**
-URL:
+**2. Create the schema and seed it,** once, from your machine:
 
 ```bash
-DATABASE_URL="postgresql://…direct…?sslmode=require" \
+DATABASE_URL="postgresql://…?sslmode=require" \
 SEED_PASSWORD="something-private" \
 npm run db:deploy
 ```
 
 That flips the provider, pushes the schema and seeds the two cycles and six
-users, printing the credentials table. Run it once.
+users, printing the credentials table.
 
-**3. Deploy on Vercel.** Import `shubhamakshat4/nirf` at
+**3. Deploy on Vercel.** Import the repo at
 [vercel.com/new](https://vercel.com/new) and add three environment variables:
 
 | Variable | Value |
 | --- | --- |
-| `DATABASE_URL` | the **pooled** Neon URL (serverless needs the pooler) |
+| `DATABASE_URL` | the same Neon connection string |
 | `AUTH_SECRET` | a fresh random string — `openssl rand -base64 32` |
 | `AUTH_TRUST_HOST` | `true` |
 
 Deploy. Sign in with `iqac@ssu.edu` and the `SEED_PASSWORD` you chose.
+
+To check a Postgres database before deploying, run the app against it locally —
+`DATABASE_URL="postgresql://…" npm run dev` — and point the smoke script at it:
+`SMOKE_PASSWORD="…" node scripts/smoke.mjs http://localhost:3000`.
 
 **Note on the free tiers.** Neon's free project suspends after a few minutes
 idle, so the first request after a pause takes a second or two to wake the
